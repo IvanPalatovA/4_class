@@ -1,0 +1,6 @@
+.ruff_cache/
+*__pycache__/
+*.env
+4М 5У Веб-разработка на Python.pptx.pdf
+4М_5У_ДЗ_Первое_приложение_на_FastAPI_docx.pdf
+.DS_Store
