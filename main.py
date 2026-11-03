@@ -1,7 +1,7 @@
 import uuid
 from datetime import datetime
 from functools import lru_cache
-from typing import Literal
+from typing import Literal, Annotated
 
 from fastapi import Depends, FastAPI, HTTPException, Query
 from pydantic import BaseModel, Field
@@ -12,6 +12,7 @@ app = FastAPI(
     description="Сервис принимает новые заказы, меняет их поля, возвращает и удаляет",
     version="1.0",
 )
+
 
 
 class Settings(BaseSettings):
@@ -26,6 +27,7 @@ class Settings(BaseSettings):
 def get_settings() -> Settings:
     return Settings()
 
+SettingsDep = Annotated["Settings", Depends(get_settings)]
 
 class DrinkRequest(BaseModel):
     name: str = Field(
@@ -113,7 +115,7 @@ class GetHello(BaseModel):
     tags=["Сервисы"],
     summary="Приветственное сообщение сервера",
 )
-async def get_start(settings: Settings = Depends(get_settings)):
+async def get_start(settings: SettingsDep):
     return GetHello(service=settings.hello_phrase)
 
 
@@ -123,7 +125,7 @@ async def get_start(settings: Settings = Depends(get_settings)):
     tags=["Сервисы"],
     summary="Краткая инфомрация о сервисе",
 )
-async def get_info(settings: Settings = Depends(get_settings)):
+async def get_info(settings: Settings):
     return GetInfoClass(service=settings.app_name, count=len(orders))
 
 
@@ -136,11 +138,10 @@ async def create_drink(drink: DrinkRequest):
 
 @app.get("/orders", tags=["Заказы"], summary="Получить заказы")
 async def order_drink(
+    settings: Settings,
     status_filter: None | Literal["pending", "ready"] = None,
     limit: int | None = Query(default=None, gt=0),
-    offset: int | None = Query(default=None, gt=0),
-    settings: Settings = Depends(get_settings),
-):
+    offset: int | None = Query(default=None, gt=0)):
     limit = settings.default_limit if limit is None else limit
     offset = settings.default_offset if offset is None else offset
     result = []
